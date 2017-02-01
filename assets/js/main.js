@@ -1,199 +1,306 @@
-		
-$(function(){
+/*
+	Landed by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+*/
 
+(function($) {
 
-	/*  Gallery lightBox
- 	================================================*/ 
+	skel.breakpoints({
+		xlarge: '(max-width: 1680px)',
+		large: '(max-width: 1280px)',
+		medium: '(max-width: 980px)',
+		small: '(max-width: 736px)',
+		xsmall: '(max-width: 480px)'
+	});
 
- 	if( $(".lightbox").length > 0 ) {
+	$(function() {
 
-		$(".lightbox").prettyPhoto();
-		
-	}
+		var	$window = $(window),
+			$body = $('body');
 
-	/*  Owl carousel
- 	================================================*/ 
+		// Disable animations/transitions until the page has loaded.
+			$body.addClass('is-loading');
 
- 	if( $(".owl-carousel").length > 0 ) {
+			$window.on('load', function() {
+				window.setTimeout(function() {
+					$body.removeClass('is-loading');
+				}, 0);
+			});
 
-		$(".owl-carousel").owlCarousel({
+		// Touch mode.
+			if (skel.vars.mobile)
+				$body.addClass('is-touch');
 
-			 margin:25,
-			 stagePadding: 25,
-	   		 nav:true,
-	   		 navText: [
-		      "<i class='glyphicon glyphicon-chevron-left'></i>",
-		      "<i class='glyphicon glyphicon-chevron-right'></i>"
-		    ],
-		    responsive:{
-		        0:{
-		            items:2
-		        },
-		        600:{
-		            items:4
-		        },
-		        1000:{
-		            items:8
-		        }
-		    }
+		// Fix: Placeholder polyfill.
+			$('form').placeholder();
 
-		});
-	}
+		// Prioritize "important" elements on medium.
+			skel.on('+medium -medium', function() {
+				$.prioritize(
+					'.important\\28 medium\\29',
+					skel.breakpoint('medium').active
+				);
+			});
 
+		// Scrolly links.
+			$('.scrolly').scrolly({
+				speed: 2000
+			});
 
-	 /* Contact form ajax Handler
-    ================================================*/
+		// Dropdowns.
+			$('#nav > ul').dropotron({
+				alignment: 'right',
+				hideDelay: 350
+			});
 
-    $(".ajax-form").on('submit', function() {
-    	var form = $(this);
-        var formURL = $(this).attr("action");
-        var postData = $(this).serializeArray();
+		// Off-Canvas Navigation.
 
-        $.ajax({
-            url: formURL,
-            type: 'POST',
-            data: postData,
-            dataType: 'json',
+			// Title Bar.
+				$(
+					'<div id="titleBar">' +
+						'<a href="#navPanel" class="toggle"></a>' +
+						'<span class="title">' + $('#logo').html() + '</span>' +
+					'</div>'
+				)
+					.appendTo($body);
 
-            success:function(data, textStatus, jqXHR){
+			// Navigation Panel.
+				$(
+					'<div id="navPanel">' +
+						'<nav>' +
+							$('#nav').navList() +
+						'</nav>' +
+					'</div>'
+				)
+					.appendTo($body)
+					.panel({
+						delay: 500,
+						hideOnClick: true,
+						hideOnSwipe: true,
+						resetScroll: true,
+						resetForms: true,
+						side: 'left',
+						target: $body,
+						visibleClass: 'navPanel-visible'
+					});
 
-                if(data.success==1){
+			// Fix: Remove navPanel transitions on WP<10 (poor/buggy performance).
+				if (skel.vars.os == 'wp' && skel.vars.osVersion < 10)
+					$('#titleBar, #navPanel, #page-wrapper')
+						.css('transition', 'none');
 
-                    form.find(".alert").fadeOut();
-                    form.find(".alert-success").html(data.message);
-                    form.find(".alert-success").fadeIn(600);
-                    
+		// Parallax.
+		// Disabled on IE (choppy scrolling) and mobile platforms (poor performance).
+			if (skel.vars.browser == 'ie'
+			||	skel.vars.mobile) {
 
-                }else{
+				$.fn._parallax = function() {
 
-                	form.find(".alert").fadeOut();
-                    form.find(".alert-danger").html(data.message);
-                    form.find(".alert-danger").fadeIn(600);
+					return $(this);
 
-                }
-            },
+				};
 
-            error: function(jqXHR, textStatus, errorThrown)  { 
-                
-                console.log(errorThrown);
-            }
+			}
+			else {
 
-        });
-            
+				$.fn._parallax = function() {
 
-        return false;
-     })
+					$(this).each(function() {
 
+						var $this = $(this),
+							on, off;
 
+						on = function() {
 
-    /*
-	On scroll animations
-	================================================
-	*/
+							$this
+								.css('background-position', 'center 0px');
 
+							$window
+								.on('scroll._parallax', function() {
 
-    var $elems = $('.animate-onscroll');
+									var pos = parseInt($window.scrollTop()) - parseInt($this.position().top);
 
-    var winheight = $(window).height();
-    var fullheight = $(document).height();
- 
-    $(window).scroll(function(){
-        animate_elems();
-    });
+									$this.css('background-position', 'center ' + (pos * -0.15) + 'px');
 
+								});
 
+						};
 
-    function animate_elems() {
+						off = function() {
 
-	    wintop = $(window).scrollTop(); // calculate distance from top of window
-	 
-	    // loop through each item to check when it animates
-	    $elems.each(function(){
-	    	
-	      $elm = $(this);
-	 
-	      if($elm.hasClass('animated')) { return true; } // if already animated skip to the next item
-	 
-	      topcoords = $elm.offset().top; // element's distance from top of page in pixels
-	 
-	      if(wintop > (topcoords - (winheight*.75))) {
-	        // animate when top of the window is 3/4 above the element
-	        $elm.addClass('animated');
-	      }
+							$this
+								.css('background-position', '');
 
-	    });
+							$window
+								.off('scroll._parallax');
 
-	  } // end animate_elems()
+						};
 
-	
+						skel.on('change', function() {
 
+							if (skel.breakpoint('medium').active)
+								(off)();
+							else
+								(on)();
 
- 	/*  Google map Script
- 	====================================================*/ 
+						});
 
-	function initMap() {
+					});
 
-  		
-  		var mapLatitude = 31.423308 ; // Google map latitude 
-  		var mapLongitude = -8.075145 ; // Google map Longitude  
+					return $(this);
 
-	    var myLatlng = new google.maps.LatLng( mapLatitude, mapLongitude );
+				};
 
-	    var mapOptions = {
+				$window
+					.on('load resize', function() {
+						$window.trigger('scroll');
+					});
 
-	            center: myLatlng,
-	            mapTypeId: google.maps.MapTypeId.ROADMAP,
-	            zoom: 10,
-	            scrollwheel: false
-	          };   
+			}
 
-	    var map = new google.maps.Map(document.getElementById("contact-map"), mapOptions);
+		// Spotlights.
+			var $spotlights = $('.spotlight');
 
-	    var marker = new google.maps.Marker({
-	    	
-	      position: myLatlng,
-	      map : map,
-	      
-	    });
+			$spotlights
+				._parallax()
+				.each(function() {
 
-	    // To add the marker to the map, call setMap();
-	    marker.setMap(map);
+					var $this = $(this),
+						on, off;
 
-	    // Map Custom style
-	    var styles = [
-		  {
-		    stylers: [
-		      { hue: "#1f76bd" },
-		      { saturation: 80 }
-		    ]
-		  },{
-		    featureType: "road",
-		    elementType: "geometry",
-		    stylers: [
-		      { lightness: 80 },
-		      { visibility: "simplified" }
-		    ]
-		  },{
-		    featureType: "road",
-		    elementType: "labels",
-		    stylers: [
-		      { visibility: "off" }
-		    ]
-		  }
-		];
+					on = function() {
 
-		map.setOptions({styles: styles});
+						// Use main <img>'s src as this spotlight's background.
+							$this.css('background-image', 'url("' + $this.find('.image.main > img').attr('src') + '")');
 
-	};
+						// Enable transitions (if supported).
+							if (skel.canUse('transition')) {
 
-	if( $("#contact-map").length > 0 ) {
+								var top, bottom, mode;
 
-		initMap();
-		
-	}
+								// Side-specific scrollex tweaks.
+									if ($this.hasClass('top')) {
 
-});
+										mode = 'top';
+										top = '-20%';
+										bottom = 0;
 
+									}
+									else if ($this.hasClass('bottom')) {
 
+										mode = 'bottom-only';
+										top = 0;
+										bottom = '20%';
 
-		
+									}
+									else {
+
+										mode = 'middle';
+										top = 0;
+										bottom = 0;
+
+									}
+
+								// Add scrollex.
+									$this.scrollex({
+										mode:		mode,
+										top:		top,
+										bottom:		bottom,
+										initialize:	function(t) { $this.addClass('inactive'); },
+										terminate:	function(t) { $this.removeClass('inactive'); },
+										enter:		function(t) { $this.removeClass('inactive'); },
+
+										// Uncomment the line below to "rewind" when this spotlight scrolls out of view.
+
+										//leave:	function(t) { $this.addClass('inactive'); },
+
+									});
+
+							}
+
+					};
+
+					off = function() {
+
+						// Clear spotlight's background.
+							$this.css('background-image', '');
+
+						// Disable transitions (if supported).
+							if (skel.canUse('transition')) {
+
+								// Remove scrollex.
+									$this.unscrollex();
+
+							}
+
+					};
+
+					skel.on('change', function() {
+
+						if (skel.breakpoint('medium').active)
+							(off)();
+						else
+							(on)();
+
+					});
+
+				});
+
+		// Wrappers.
+			var $wrappers = $('.wrapper');
+
+			$wrappers
+				.each(function() {
+
+					var $this = $(this),
+						on, off;
+
+					on = function() {
+
+						if (skel.canUse('transition')) {
+
+							$this.scrollex({
+								top:		250,
+								bottom:		0,
+								initialize:	function(t) { $this.addClass('inactive'); },
+								terminate:	function(t) { $this.removeClass('inactive'); },
+								enter:		function(t) { $this.removeClass('inactive'); },
+
+								// Uncomment the line below to "rewind" when this wrapper scrolls out of view.
+
+								//leave:	function(t) { $this.addClass('inactive'); },
+
+							});
+
+						}
+
+					};
+
+					off = function() {
+
+						if (skel.canUse('transition'))
+							$this.unscrollex();
+
+					};
+
+					skel.on('change', function() {
+
+						if (skel.breakpoint('medium').active)
+							(off)();
+						else
+							(on)();
+
+					});
+
+				});
+
+		// Banner.
+			var $banner = $('#banner');
+
+			$banner
+				._parallax();
+
+	});
+
+})(jQuery);
